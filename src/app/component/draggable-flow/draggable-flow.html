@@ -1,0 +1,207 @@
+<f-flow
+  fDraggable
+  (fLoaded)="onLoaded()"
+  (fSelectionChange)="onSelectionChange($event)"
+>
+  <f-background>
+    <f-circle-pattern></f-circle-pattern>
+  </f-background>
+
+  <f-canvas *ngIf="!graphNodes.length" fZoom [ngClass]="{ hidden: !showCanvas }">
+    <div class="node node-start" fNode [fNodeDraggingDisabled]="true">
+      <button type="button" class="btn-start-action" (click)="addNew()">
+        <i class="material-icons">add</i>
+        <span>{{ 'Add a Competency' }}</span>
+      </button>
+
+      <div class="node-body">
+        <div class="node-body-title">{{ 'Setup Training Pathway' }}</div>
+        <div class="node-body-content">
+          {{ 'Start building a tailored training journey by adding competencies.' }}
+        </div>
+      </div>
+    </div>
+  </f-canvas>
+
+  <f-canvas *ngIf="graphNodes.length" fZoom [ngClass]="{ hidden: !showCanvas }">
+    <div
+      class="node node-warning"
+      *ngIf="isNodesHaveRestrictedTarget"
+      fNode
+      [fNodePosition]="{
+        x: nodes[0].position.x,
+        y: nodes[0].position.y - 136
+      }"
+    >
+      <div class="node-number">
+        <i class="material-icons">warning_amber</i>
+      </div>
+      <div class="node-body">
+        <div class="node-body-title">{{ "Warning" }}</div>
+        <div class="node-body-content">
+          {{ "Some competencies are not available under the current " }}<a
+            href="#back"
+            (click)="null"
+            >targeting settings</a
+          >{{ ". Users in certain locations or roles or team won't have access when published." }}
+        </div>
+      </div>
+    </div>
+
+
+    <f-connection
+      *ngFor="let connection of connections"
+      [fOutputId]="connection.from"
+      [fInputId]="connection.to"
+      [fReassignDisabled]="true"
+    >
+    <button
+      type="button"
+      class="edge-action"
+      fConnectionCenter
+    >
+      <i class="material-icons">add</i>
+    </button>
+  </f-connection>
+
+    <!-- TODO checkbox First SELECT ALL -->
+    <div
+      class="node node-default"
+      [ngClass]="{
+        checked: nodesChecked.includes(node.connectorId),
+        selected: false && node.connectorId === nodeSelected
+      }"
+      *ngFor="let node of nodes; index as i"
+      fNode
+      [fNodeId]="node.connectorId"
+      [fNodePosition]="node.position"
+      fNodeInput
+      [fInputId]="node.connectorId"
+      [fInputConnectableSide]="configuration.inputSide"
+      [fOutputConnectableSide]="configuration.outputSide"
+      fNodeOutput
+      [fOutputId]="node.connectorId"
+      [fOutputMultiple]="true"
+      (fNodePositionChange)="onNodePositionChange($event)"
+      [fNodeDraggingDisabled]="false"
+      [fNodeSelectionDisabled]="showToolbarOptions"
+      [draggable]="true"
+      (dragstart)="onNodeDragStart($event)"
+      (dragover)="onNodeDragOver($event)"
+      (drop)="onNodeDrop($event)"
+    >
+      <div class="node-select-all" *ngIf="i === 0 && showToolbarOptions">
+        <input type="checkbox" [checked]="true" />
+        <span>{{ 'COMMON.SELECT_ALL' }}</span>
+      </div>
+      <div class="node-number">
+        <span *ngIf="!showToolbarOptions">{{ (i + 1) }}</span>
+        <input type="checkbox" [checked]="true" *ngIf="showToolbarOptions" />
+      </div>
+      <div class="node-body">
+        <div class="node-body-title">
+          {{ graphNodes?.[i]?.data?.name ?? node.connectorId }}
+        </div>
+        <div class="node-body-footer">
+          <div class="node-body-badge default">
+            <span
+              >{{ graphNodes?.[i]?.data?.courseTotal ?? 0 }}
+              <ng-container
+                *ngIf="(graphNodes?.[i]?.data?.courseTotal ?? 0) <= 1"
+                >course</ng-container
+              ><ng-container
+                *ngIf="(graphNodes?.[i]?.data?.courseTotal ?? 0) > 1"
+                >courses</ng-container
+              ></span
+            >
+          </div>
+          <div class="flex gap-2 items-center">
+            <div
+              class="node-body-badge restricted"
+              *ngIf="graphNodes?.[i]?.data?.restricted"
+            >
+              <i class="material-icons">warning_amber</i>
+              <span>Restricted</span>
+            </div>
+            <button
+              type="button"
+              class="node-btn-delete"
+              (click)="deleteNode(node.connectorId)"
+            >
+              <i class="material-icons">delete</i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="node-cursor">
+        <!-- <img
+          src="assets\icon\new-icon\cursor.svg"
+          alt="Drag cursor icon"
+          title="Move Competency"
+        /> -->
+        +
+      </button>
+    </div>
+
+    <!-- end node -->
+    <f-connection
+    [fOutputId]="graphNodes[nodes.length - 1].id"
+    [fInputId]="'node-end'"
+    [fReassignDisabled]="true"
+  >
+  <button
+      type="button"
+      class="edge-action"
+      fConnectionCenter
+    >
+      <i class="material-icons">add</i>
+    </button>
+</f-connection>
+
+  <div
+    class="node node-end"
+    fNode
+    [fNodeId]="'node-end'"
+    [fNodePosition]="{
+      x: nodes[nodes.length - 1].position.x,
+      y: nodes[nodes.length - 1].position.y + 216
+    }"
+    fNodeInput
+    [fInputId]="'node-end'"
+    [fInputConnectableSide]="configuration.inputSide"
+    [fNodeDraggingDisabled]="false"
+  >
+    <div class="node-body">
+      <div class="node-body-title">{{ 'Training journey ends' }}</div>
+    </div>
+  </div>
+
+  </f-canvas>
+</f-flow>
+
+<div class="toolbar">
+  <!-- <button class="f-button" (click)="horizontal()">Horizontal</button>
+  <button class="f-button" (click)="vertical()">Vertical</button> -->
+
+  <div class="left-corner-wrapper">
+    <button
+      type="button"
+      class="btn-left-corner"
+      [ngClass]="{
+        active: showToolbarOptions
+      }"
+      (click)="toggleToolbarOptions()"
+    >
+      <i class="material-icons">format_list_bulleted</i>
+    </button>
+    <button
+      type="button"
+      class="btn-left-corner delete"
+      *ngIf="showToolbarOptions"
+      (click)="null"
+    >
+      <i class="material-icons">delete</i>
+    </button>
+  </div>
+
+</div>
